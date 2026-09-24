@@ -8,14 +8,12 @@ Try the deployed app at [http://3.108.57.76](http://3.108.57.76). The demo may b
 
 ## Screenshots
 
-The screenshot assets should live in `docs/screenshots/`.
-
 | View | Preview |
 |---|---|
 | Dashboard | ![Dashboard](docs/screenshots/dashboard.png) |
 | Create link | ![Create link](docs/screenshots/create-link.png) |
-| Link statistics | ![Statistics](docs/screenshots/stats.png) |
 | QR code | ![QR code](docs/screenshots/qr.png) |
+| Link statistics | ![Statistics](docs/screenshots/stats.png) |
 
 ## Features
 
