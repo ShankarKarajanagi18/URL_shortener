@@ -17,6 +17,21 @@ const status = (l) =>
   l.expires_at && new Date(l.expires_at) < new Date() ? 'Expired'
   : l.max_clicks && l.click_count >= l.max_clicks ? 'Limit reached' : 'Active';
 
+function Brand({ compact = false }) {
+  return <div className={`brand ${compact ? 'brand-compact' : ''}`}><span className="brand-mark">↗</span><span>Shortly</span></div>;
+}
+
+function FeatureList() {
+  const features = [
+    ['↗', 'Shorten URLs', 'Convert long links into clean, shareable URLs.'],
+    ['⌘', 'Manage your links', 'Create, view and delete your links anytime.'],
+    ['◷', 'Expiry & click limits', 'Set a date or maximum number of clicks.'],
+    ['▦', 'Download QR codes', 'Share every short link as a QR code.'],
+    ['▥', 'Track & analyze', 'Monitor clicks and understand performance.'],
+  ];
+  return <div className="feature-list">{features.map(([icon, title, copy]) => <div className="feature" key={title}><span className="feature-icon">{icon}</span><div><b>{title}</b><p>{copy}</p></div></div>)}</div>;
+}
+
 function Auth({ onAuth }) {
   const [mode, setMode] = useState('login');
   const [f, setF] = useState({ email: '', password: '' });
@@ -29,17 +44,21 @@ function Auth({ onAuth }) {
     } catch (e) { setErr(e.message); }
   };
   return (
-    <form className="card auth" onSubmit={submit}>
-      <h1>Shortly</h1>
-      <p className="muted">Short links with expiry dates, click limits and QR codes.</p>
-      <input type="email" required placeholder="Email" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
-      <input type="password" required placeholder="Password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} />
-      {err && <p className="err">{err}</p>}
-      <button>{mode === 'login' ? 'Log in' : 'Create account'}</button>
-      <button type="button" className="ghost" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>
-        {mode === 'login' ? 'New here? Create an account' : 'Have an account? Log in'}
-      </button>
-    </form>
+    <div className="auth-page">
+      <div className="auth-brand"><Brand /><span>Already have an account? <button className="ghost" type="button" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? 'Create an account' : 'Log in'} →</button></span></div>
+      <div className="auth-layout">
+        <section className="auth-intro"><p className="eyebrow">Shorten. Share. Track.</p><h1>Turn long links into <em>short, powerful links.</em></h1><p className="intro-copy">Simple URL shortening with powerful features to help you share, manage and track your links, all in one place.</p><FeatureList /></section>
+        <form className="card auth" onSubmit={submit}>
+          <Brand compact /><p className="welcome">{mode === 'login' ? 'Welcome back!' : 'Create your account'}</p><p className="muted">{mode === 'login' ? 'Sign in to manage your links and track performance.' : 'Start creating and tracking your short links.'}</p>
+          <label htmlFor="email">Email</label><input id="email" type="email" required placeholder="Enter your email address" value={f.email} onChange={(e) => setF({ ...f, email: e.target.value })} />
+          <label htmlFor="password">Password</label><input id="password" type="password" required placeholder="Enter your password" value={f.password} onChange={(e) => setF({ ...f, password: e.target.value })} />
+          {err && <p className="err">{err}</p>}
+          <button className="primary-action">{mode === 'login' ? 'Log in  →' : 'Create account  →'}</button>
+          <div className="or"><span>OR</span></div>
+          <button type="button" className="switch-auth ghost" onClick={() => setMode(mode === 'login' ? 'register' : 'login')}>{mode === 'login' ? '♙  New here? Create an account' : '←  Have an account? Log in'}</button>
+        </form>
+      </div>
+    </div>
   );
 }
 
@@ -70,13 +89,14 @@ function Create({ onCreated }) {
     } catch (e) { setErr(e.message); }
   };
   return (
-    <form className="card" onSubmit={submit}>
-      <input required placeholder="Paste a long URL" value={f.url} onChange={set('url')} />
+    <form className="card create-card" onSubmit={submit}>
+      <div className="section-heading"><span className="section-icon">↗</span><div><h2>Shortly</h2><p>Short links with expiry dates, click limits and QR codes.</p></div><span className="hero-link">↗</span></div>
+      <input required aria-label="Long URL" placeholder="↗   Paste a long URL" value={f.url} onChange={set('url')} />
       <div className="grid">
-        <input placeholder="Custom alias (optional)" value={f.alias} onChange={set('alias')} />
-        <input type="datetime-local" title="Expires at" value={f.expiresAt} onChange={set('expiresAt')} />
-        <input type="number" min="1" placeholder="Max clicks" value={f.maxClicks} onChange={set('maxClicks')} />
-        <button>Shorten</button>
+        <input aria-label="Custom alias" placeholder="↗   Custom alias (optional)" value={f.alias} onChange={set('alias')} />
+        <input aria-label="Expires at" type="datetime-local" title="Expires at" value={f.expiresAt} onChange={set('expiresAt')} />
+        <input aria-label="Max clicks" type="number" min="1" placeholder="◷   Max clicks" value={f.maxClicks} onChange={set('maxClicks')} />
+        <button className="primary-action">➤  Shorten</button>
       </div>
       {err && <p className="err">{err}</p>}
     </form>
@@ -115,10 +135,12 @@ function Dashboard({ email, onLogout }) {
   };
   return (
     <main>
-      <header className="row"><h1>Shortly</h1><span>{email} <button className="ghost" onClick={onLogout}>Log out</button></span></header>
+      <header className="topbar"><Brand /><span className="account"><span>✉ &nbsp;{email}</span><button className="ghost" onClick={onLogout}>↪ &nbsp; Log out</button></span></header>
       <Create onCreated={load} />
-      <div className="card scroll">
-        {links.length === 0 ? <p className="muted">No links yet. Paste a URL above to create your first one.</p> : (
+      <div className="card links-card">
+        <div className="section-heading compact-heading"><span className="section-icon">↗</span><div><h2>Your Links</h2><p>Manage, copy and track your shortened links.</p></div></div>
+        {links.length === 0 ? <p className="empty-state">ⓘ &nbsp; No links yet. Paste a URL above to create your first one.</p> : (
+          <div className="scroll">
           <table>
             <thead><tr><th>Short link</th><th>Original</th><th>Clicks</th><th>Status</th><th>Expires</th><th></th></tr></thead>
             <tbody>
@@ -130,15 +152,16 @@ function Dashboard({ email, onLogout }) {
                   <td><span className={`pill ${status(l).replace(' ', '-').toLowerCase()}`}>{status(l)}</span></td>
                   <td>{l.expires_at ? new Date(l.expires_at).toLocaleString() : 'Never'}</td>
                   <td className="actions">
-                    <button className="ghost" onClick={() => navigator.clipboard.writeText(l.short_url)}>Copy</button>
-                    <button className="ghost" onClick={() => setModal({ type: 'qr', l })}>QR</button>
-                    <button className="ghost" onClick={() => setModal({ type: 'stats', l })}>Stats</button>
-                    <button className="ghost danger" onClick={() => del(l.id)}>Delete</button>
+                    <button className="icon-action copy" title="Copy link" onClick={() => navigator.clipboard.writeText(l.short_url)}>▣<small>Copy</small></button>
+                    <button className="icon-action qr-action" title="Show QR code" onClick={() => setModal({ type: 'qr', l })}>▦<small>QR</small></button>
+                    <button className="icon-action stats-action" title="View stats" onClick={() => setModal({ type: 'stats', l })}>▥<small>Stats</small></button>
+                    <button className="icon-action danger" title="Delete link" onClick={() => del(l.id)}>▥<small>Delete</small></button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          </div>
         )}
       </div>
       {modal?.type === 'qr' && (
