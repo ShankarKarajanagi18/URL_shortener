@@ -1,44 +1,127 @@
-# Shortly: URL Shortener
+# Shortly
 
-React + Node/Express + PostgreSQL, containerised with Docker, deployable on AWS EC2 + RDS.
+A focused URL shortener for creating, sharing, and tracking short links.
 
-**Features:** shorten URLs, custom aliases, link expiry (date and/or max clicks), QR code per link (PNG download), JWT auth, click analytics (per day, referrers, devices), rate limiting.
+## Live demo
 
-## Run locally
-```bash
-cp .env.example .env      # set JWT_SECRET
-docker compose up --build
-# open http://localhost:8080
+Try the deployed app at [http://3.108.57.76](http://3.108.57.76). The demo may be taken down later.
+
+## Screenshots
+
+The screenshot assets should live in `docs/screenshots/`.
+
+| View | Preview |
+|---|---|
+| Dashboard | ![Dashboard](docs/screenshots/dashboard.png) |
+| Create link | ![Create link](docs/screenshots/create-link.png) |
+| Link statistics | ![Statistics](docs/screenshots/stats.png) |
+| QR code | ![QR code](docs/screenshots/qr.png) |
+
+## Features
+
+- JWT authentication with registration and login
+- Create, manage, and delete links
+- Custom aliases
+- Link expiry by date or maximum clicks
+- QR code for each link with PNG download
+- Click analytics by day, top referrers, and devices
+- Rate limiting on authentication and link creation endpoints
+- URL validation for HTTP and HTTPS links, including service-loop prevention
+
+## Tech stack
+
+[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=20232a)](https://react.dev/)
+[![Vite](https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white)](https://vitejs.dev/)
+[![Node.js](https://img.shields.io/badge/Node.js-20-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
+[![Express](https://img.shields.io/badge/Express-4-000000?logo=express&logoColor=white)](https://expressjs.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
+[![Nginx](https://img.shields.io/badge/Nginx-runtime-009639?logo=nginx&logoColor=white)](https://nginx.org/)
+[![AWS](https://img.shields.io/badge/AWS-EC2%20%2B%20RDS-232F3E?logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+
+## Architecture
+
+```text
+Browser -> Nginx -> Express API -> PostgreSQL (RDS)
 ```
-Without Docker: run Postgres, then in `backend/` run `DATABASE_URL=postgres://user:pass@localhost:5432/db BASE_URL=http://localhost:4000 npm run dev`, and in `frontend/` run `npm install && npm run dev`. Tables are created automatically on startup.
 
-## API
-| Method | Path | Notes |
-|---|---|---|
-| POST | /api/auth/register, /api/auth/login | returns JWT |
-| POST | /api/links | `{url, alias?, expiresAt?, maxClicks?}` (auth) |
-| GET | /api/links | your links (auth) |
-| DELETE | /api/links/:id | (auth) |
-| GET | /api/links/:id/stats | clicks/day, referrers, devices (auth) |
-| GET | /api/qr/:code | PNG, or `?format=svg` |
-| GET | /:code | 302 redirect, or 410 if expired / limit reached |
+Nginx serves the React build and forwards API and short-code requests to Express. In production, Express connects to PostgreSQL on Amazon RDS.
 
 ## How it works
-- **Code generation:** random 7-char base62 code, retried on a unique-constraint collision.
-- **Expiry and click limit:** one atomic `UPDATE ... WHERE not expired AND click_count < max_clicks RETURNING`. No race condition, even under concurrent clicks.
-- **302, not 301:** browsers cache 301s, so repeat clicks would never reach the server and analytics would break.
-- **Async click logging:** the redirect is sent first, the analytics insert happens after.
-- **Validation:** only http/https, and links pointing back to this service are rejected (prevents redirect loops).
-- **Nginx** serves the React build, proxies `/api` and short codes to the API.
 
-## Deploy on AWS (EC2 + RDS)
-1. **RDS:** create a PostgreSQL instance (db name `shortener`), private access. Note the endpoint.
-2. **EC2:** Ubuntu t3.micro. Security group: allow 22 (your IP), 80 and 443 (anywhere).
-3. **RDS security group:** allow inbound 5432 from the EC2 security group.
-4. On EC2: `sudo apt update && sudo apt install -y docker.io docker-compose-v2 git && sudo usermod -aG docker $USER`, then log out and back in.
-5. `git clone` your repo, create `.env` with `DATABASE_URL`, `JWT_SECRET`, and `BASE_URL=http://<EC2 public IP or domain>`.
-6. `docker compose -f docker-compose.prod.yml up -d --build`
-7. Open the EC2 public IP. Optional: point a domain at it and add HTTPS with Let's Encrypt (certbot), then set `BASE_URL` to the https domain.
+- New links receive a random 7-character base62 code. Unique-constraint collisions are retried.
+- Redirects use one atomic `UPDATE` query to check expiry and the click limit while incrementing the count, avoiding race conditions.
+- Redirects return `302`, not `301`, so every click reaches the server for analytics.
+- Click logging runs after the redirect response is sent to keep redirects fast.
+- Only `http` and `https` URLs are accepted, and links pointing back to the service are rejected.
+- Nginx serves the React build and proxies `/api` and short codes to the API.
 
-## Next steps
-Redis cache for redirects, GitHub Actions deploy, Jest + Supertest tests, k6 load test for a resume number.
+## API endpoints
+
+| Method | Path | Auth | Description |
+|---|---|---:|---|
+| GET | `/health` | No | Health check. |
+| POST | `/api/auth/register` | No | Register and receive a JWT. |
+| POST | `/api/auth/login` | No | Log in and receive a JWT. |
+| POST | `/api/links` | Yes | Create a link with an optional alias, expiry, and click limit. |
+| GET | `/api/links` | Yes | List the authenticated user's links. |
+| DELETE | `/api/links/:id` | Yes | Delete one of the user's links. |
+| GET | `/api/links/:id/stats` | Yes | Return clicks by day, referrers, and devices. |
+| GET | `/api/qr/:code` | No | Return a QR code as PNG; use `?format=svg` for SVG. |
+| GET | `/:code` | No | Redirect to the original URL, or return `410` when expired or limited. |
+
+## Run locally with Docker
+
+Copy `.env.example` to `.env` and set `JWT_SECRET` to a long random value. Then run:
+
+```bash
+docker compose up --build
+```
+
+Open [http://localhost:8080](http://localhost:8080). The Compose setup starts PostgreSQL, the Express API, and the Nginx-served React frontend. Database tables are created automatically when the API starts.
+
+## Deploy on AWS
+
+The production Compose file is designed for an Ubuntu EC2 instance connected to PostgreSQL on Amazon RDS. Configure `DATABASE_URL`, `JWT_SECRET`, and `BASE_URL` in the server environment, allow HTTP/HTTPS traffic to EC2, and allow PostgreSQL traffic from EC2 to RDS. Then run:
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+The production setup runs the backend against RDS and exposes Nginx on port 80. Use a custom domain and HTTPS in front of the service for a production deployment.
+
+## Project structure
+
+```text
+.
+├── backend/
+│   ├── src/
+│   │   ├── db.js
+│   │   ├── index.js
+│   │   └── schema.sql
+│   ├── Dockerfile
+│   ├── package.json
+│   └── package-lock.json
+├── frontend/
+│   ├── src/
+│   │   ├── App.jsx
+│   │   ├── main.jsx
+│   │   └── styles.css
+│   ├── Dockerfile
+│   ├── index.html
+│   ├── nginx.conf
+│   ├── package.json
+│   └── package-lock.json
+├── docker-compose.prod.yml
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
+
+## Future improvements
+
+- Redis caching for redirects
+- HTTPS with a custom domain
+- GitHub Actions CI/CD
+- Jest and Supertest coverage
+- k6 load testing
