@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:16-bookworm
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: shortener
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d shortener"]
+      interval: 5s
+      retries: 10
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgres://app:${DB_PASSWORD:-password}@db:5432/shortener
+      JWT_SECRET: ${JWT_SECRET:-change-me}
+      BASE_URL: ${BASE_URL:-http://localhost:8080}
+    depends_on:
+      db: { condition: service_healthy }
+  frontend:
+    build: ./frontend
+    ports: ["8080:80"]
+    depends_on: [backend]
+volumes:
+  pgdata: {}

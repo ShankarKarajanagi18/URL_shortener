@@ -1,0 +1,20 @@
+:root { --bg:#f3f5f9; --card:#fff; --ink:#101828; --muted:#667085; --line:#e4e7ec; --accent:#1d4ed8; --danger:#b42318; }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+main { max-width: 1000px; margin: 0 auto; padding: 24px 16px 64px; }
+h1 { margin:0; font-size: 26px; letter-spacing:-.02em; } h3,h4 { margin: 12px 0 6px; }
+.card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:16px; margin-top:16px; display:flex; flex-direction:column; gap:10px; }
+.row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+.grid { display:grid; grid-template-columns: 1.4fr 1.2fr 1fr auto; gap:10px; }
+@media (max-width:700px){ .grid { grid-template-columns: 1fr; } }
+input { padding:10px 12px; border:1px solid var(--line); border-radius:8px; font:inherit; width:100%; }
+input:focus, button:focus-visible, a:focus-visible { outline:2px solid var(--accent); outline-offset:1px; }
+button, .btn { background:var(--accent); color:#fff; border:0; border-radius:8px; padding:10px 16px; font:inherit; font-weight:600; cursor:pointer; text-align:center; text-decoration:none; }
+button.ghost { background:transparent; color:var(--accent); padding:6px 10px; } button.danger { color:var(--danger); }
+.auth { max-width:380px; margin:12vh auto 0; } .muted { color:var(--muted); margin:0; } .err { color:var(--danger); margin:0; }
+.scroll { overflow-x:auto; } table { width:100%; border-collapse:collapse; } th,td { text-align:left; padding:10px 8px; border-bottom:1px solid var(--line); white-space:nowrap; }
+th { color:var(--muted); font-weight:500; } .orig { max-width:220px; overflow:hidden; text-overflow:ellipsis; } .actions { text-align:right; }
+.pill { padding:2px 10px; border-radius:99px; font-size:13px; background:#dcfae6; color:#067647; } .pill.expired, .pill.limit-reached { background:#fee4e2; color:var(--danger); }
+.overlay { position:fixed; inset:0; background:rgba(16,24,40,.5); display:grid; place-items:center; padding:16px; }
+.modal { width:100%; max-width:420px; max-height:90vh; overflow:auto; margin:0; } .qr { width:240px; height:240px; align-self:center; }
+.bars { display:flex; align-items:flex-end; gap:3px; height:80px; } .bar { flex:1; background:var(--accent); border-radius:3px 3px 0 0; min-height:2px; }

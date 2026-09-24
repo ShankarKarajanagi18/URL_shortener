@@ -1,0 +1,15 @@
+# For EC2 + RDS: no local database, app talks to RDS.
+services:
+  backend:
+    build: ./backend
+    restart: always
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      DB_SSL: "true"
+      JWT_SECRET: ${JWT_SECRET}
+      BASE_URL: ${BASE_URL}
+  frontend:
+    build: ./frontend
+    restart: always
+    ports: ["80:80"]
+    depends_on: [backend]
